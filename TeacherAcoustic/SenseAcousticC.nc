@@ -67,7 +67,7 @@ implementation
 
     #define SAMPLING_FREQUENCY 1000  /* should be higher than 100 ms */
     #define CALIBRATION_TIME 30      /* Times we will sample for calibration period on boot */
-    #define SPEECH_TIMER 10          /* TODO: come up with a better way, or a reason for making this 10 
+    #define SPEECH_TIMER 10000          /* TODO: come up with a better way, or a reason for making this 10 
                                         (this is the delay before assuming teacher is done talking) */
 
     uint16_t ChannelNo = 0; 
