@@ -1,6 +1,10 @@
 LEVEL 
 Classroom application
 
-TeacherAcousting: Teacher mote.  In its current state, the mote calibrates its acoustic sensor 
+TeacherAcoustic: Teacher mote.  In its current state, the mote calibrates its acoustic sensor 
 for its current environment and sends out broadcast packets instructing student motes to turn on 
 green or red LED.  
+
+StudentAcoustic: Student mote.  In its current state, the mote calibrates its acoustic sensor for its
+current environment.  It will then listen for packets from the teacher mote, turning red if a red packet received
+and turning green after a specified delay as contained in the packet if a green packet is received.

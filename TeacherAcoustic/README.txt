@@ -1,18 +1,25 @@
 /*****************************************************************************************/
-/* Application : SenseAcoustic                                                        */
+/* Application : TeacherAcoustic                                                         */
 /*****************************************************************************************/
 /*                                                                                       */
-/* This code is intended for the EasySen SBT80 Sensor board along with TelosB            */
-/* family of wireless motes.                                                             */
+/* This application is the teacher component of the LEVEL-ByStudent System.               */
 /*                                                                                       */
-/* Code samples ADC channel for acoustic sensor.                                         */ 
+/*                                                                                       */
+/*                                                                                       */
 /*                                                                                       */
 /*****************************************************************************************/
 
 TODO: this README is out of date...once we have functionality dialed, we need to update this.
 
-Simple program to sample ADC1 channel (acoustic sensor on SBT80 sensor board) and TX 
-packet.  
+The application begins by running a calibration mode for 30 seconds to detect the parameters of the ambient
+background.  During this time, there should be no talking being done by the teacher.
+
+After calibration, the LED will no longer show blue, and the teacher may begin teaching.  The mote will detect 
+when the teacher is talking.  Once the teacher stops talking, the mote will inform all student motes (StudentAcoustic)
+of when the teacher ceased talking and when they should give the student a green light to talk.
+
+Once the teacher begins talking again, the application will inform all student motes that they should switch to Red.
+
 
 Includes the printf client which allows user to see output in terminal.
 

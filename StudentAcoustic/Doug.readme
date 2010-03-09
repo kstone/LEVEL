@@ -1,0 +1,21 @@
+/* 
+ * Doug -- The easiest way to test this in its current form is to install SenseAcoustic  
+ * on 1 mote, install BaseStation on a second and leave BaseStation connected to Comp.   
+ * Set your MOTECOM variable appropriately for your base station mote      
+ * Run the Java listener tool: java net.tinyos.tools.Listen                             
+ *
+ * Printf statements are in the code to assist in debugging.  To see calibration stats:
+ * To see the printf statements on the screen, attach the SenseAcoustic mote to comp,
+ * Set your MOTECOM variable appropriately for your SenseAcoustic mote,
+ * run the Java PrintF application: java net.tinyos.tools.PrintfClient 
+ *
+ * SenseAcoustic operation:
+ *  1.  Calibrates the acoustic sensor for the current environment
+ *  2.  Sends either red packet 0000dead or green packet 1111dead (broadcast)
+ *      packet designates turn on red LED if contents is 0000dead
+ *      packet designates turn on green LED if contents is 1111dead
+ *      (TODO: determine if we want all motes to default to red, and for acoustic 
+ *      packets to only be sent after the user button is pressed.)                       
+ *      If sending green packet, SenseAcoustic motes green LED blinks, 
+ *      If sending red packet, SenseAcoustic motes red LED blinks.                       */
+/*****************************************************************************************/
