@@ -170,18 +170,24 @@ implementation
     event  message_t* Receive.receive(message_t* msg, void* payload, uint8_t length){
         SenseToRadioMsg* ptrpkt = (SenseToRadioMsg*)payload;
 
-	//DEBUG only - flash the blue light to indicate a packet received.
+	/* DEBUG only - flash the blue light to indicate a packet received. */
         call Leds.led2On();
         call Leds.led2Off();
-	//END DEBUG only
-
+	/* END DEBUG only */
         if (ptrpkt->data[ChannelNo]==RED_PACKET_FLAG){
 		call GreenLightTimer.stop();//Stop the green light timer if it is running.
         	call Leds.led0On();//Turn on the red light
        		call Leds.led1Off();//Turn off the green light
         }
 	else if (ptrpkt->data[ChannelNo]==GREEN_PACKET_FLAG){
-		call GreenLightTimer.startOneShot((ptrpkt->data[ChannelNo+3])-(ptrpkt->data[ChannelNo+2]));//Start a timer for when the green light should turn on.	
+                if (call GreenLightTimer.isRunning())
+		{
+			/*  Do nothing? */
+		}
+		else
+		{
+			call GreenLightTimer.startOneShot((ptrpkt->data[ChannelNo+3])-(ptrpkt->data[ChannelNo+2]));//Start a timer for when the green light should turn on.	
+		}
 	}
 	else
 	{

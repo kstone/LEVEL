@@ -68,10 +68,10 @@ implementation
 
     #define SAMPLING_FREQUENCY 1000  /* should be higher than 100 ms */
     #define CALIBRATION_TIME 30      /* Times we will sample for calibration period on boot */
-    #define SPEECH_TIMER 10000          /* TODO: come up with a better way, or a reason for making this 10 
+    #define SPEECH_TIMER 5000          /* TODO: come up with a better way, or a reason for making this 10 
                                         (this is the delay before assuming teacher is done talking) */
     #define UNIVERSAL_TIMER 1000000   /* Basically creating a reference frame for events.  Should be large enough that there will be no collisions by wraparound */
-    #define HAND_RAISE_DELAY 30000  /* Time (in ms) to delay before giving the kids a green to raise their hands after the teach stops talking. */
+    #define HAND_RAISE_DELAY 15000  /* Time (in ms) to delay before giving the kids a green to raise their hands after the teach stops talking. */
 
     uint16_t ChannelNo = 0; 
 
@@ -168,6 +168,9 @@ implementation
     event void SpeechTimer.fired(){
         /* Teacher is not talking, turn students lights green...Delay is accounted for on student mote */
         post sendGreenPacket();
+	
+	/* Turn off debug blue led as well. */
+ 	call Leds.led2Off();
     }
 
     event void AMControl.startDone(error_t err) {
@@ -248,6 +251,10 @@ implementation
                 post sendRedPacket();  /* we probably don't need to send this packet with every readying...we will for now */
 
                 /* If the countdown timer to turn students lights green was started, stop it because the teacher is still talking */
+
+		/* For debug, turn on the blue led when "Talking" is detected" */
+		call Leds.led2On();
+
                 if(call SpeechTimer.isRunning()){
                     printf("SpeechTimer was running, but still talking...turning timer off.\n");
                     call SpeechTimer.stop();
@@ -258,7 +265,7 @@ implementation
                 /* Need to keep track of how many samples come back in this range...and turn students lights green at the appropriate time.  */
                 /* TODO: this is currently dependant on the sampling rate, SAMPLING_FREQUENCY, this is not ideal */
                 if(call SpeechTimer.isRunning()){
-                    /* The timer is already running...no need to start it...Do we need this? */
+                    /* The timer is already running...no need to start it...Do we need this? Most likely not //DH */
                 }
                 else{
                     printf("Sarting the SpeechTimer.\n");
