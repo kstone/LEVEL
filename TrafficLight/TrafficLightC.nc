@@ -41,11 +41,11 @@ module TrafficLightC
 
 implementation
 {
-    unit8_t state;
+    uint8_t mystate;
     uint16_t ChannelNo = 0; 
-    #define RED_STATE = 0;
-    #define YELLOW_STATE = 1;
-    #define GREEN_STATE = 2;
+    #define RED_STATE 0
+    #define YELLOW_STATE 1
+    #define GREEN_STATE 2
 
     #define YELLOW_LENGTH 1000  //How long the yellow should be on before Red Comes
     uint8_t len;
@@ -70,7 +70,7 @@ implementation
 
 	//Turn on the Red light 
 	call Red.clr();		
-	state=RED_STATE;
+	mystate = RED_STATE;
 
     }
 
@@ -85,7 +85,7 @@ implementation
 	call Yellow.set();//Turn off Yellow
 
 
-	state=GREEN_STATE;
+	mystate=GREEN_STATE;
     }	
     event void RedLightTimer.fired(){
 	call Leds.led0On();//Turn on Red
@@ -95,7 +95,7 @@ implementation
 	call Green.set();//Turn off green.
 	call Yellow.set();//Turn off yellow
 
-	state=RED_STATE;
+	mystate=RED_STATE;
     }	
 
 
@@ -124,7 +124,7 @@ implementation
 	/* END DEBUG only */
         if (ptrpkt->data[ChannelNo]==RED_PACKET_FLAG){
 		call GreenLightTimer.stop();//Stop the green light timer if it is running.
-		if (state==GREEN_STATE)
+		if (mystate==GREEN_STATE)
 		{
         		call Leds.led0On();//Turn on the red led
 	       		call Leds.led1Off();//Turn off the green led
@@ -132,7 +132,7 @@ implementation
 			call Green.set();//Turn green off
 				
 			call RedLightTimer.startOneShot(YELLOW_LENGTH);//Start a timer to turn off the yellow and turn on the red.
-			state=YELLOW_STATE;
+			mystate=YELLOW_STATE;
 		}
 
 
