@@ -4,6 +4,9 @@
 /*                                                                                       */
 /*                                                                                       */
 /*  Code is meant to control the traffic light based upon packets received.              */
+/*  Red Packet received -> Light turned to yellow, then 1 second later, to Red           */
+/*  Green Packet received -> Timer set based on information in packet, at which light    */
+/*    turns to green.                                                                    */
 /*                                                                                       */
 /*****************************************************************************************/
 
@@ -24,8 +27,8 @@ implementation {
     components TrafficLightC;
     components MainC;
     components LedsC;
-    components new TimerMilliC() as GreenLightTimer;
-    components new TimerMilliC() as RedLightTimer;
+    components new TimerMilliC() as GreenLightTimer;//Shift from Red to Green.
+    components new TimerMilliC() as RedLightTimer;//Shift from Yellow to Red
     
 
 

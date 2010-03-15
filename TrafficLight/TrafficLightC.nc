@@ -43,8 +43,7 @@ implementation
 {
 
     uint16_t ChannelNo = 0; 
-    #define GREEN_LIGHT_DEBUG 4000
-    #define YELLOW_LENGTH 1000
+    #define YELLOW_LENGTH 1000  //How long the yellow should be on before Red Comes
     uint8_t len;
     bool busy = FALSE;  /* used to keep track if radio is busy */
     message_t pkt;
@@ -53,7 +52,6 @@ implementation
     event void Boot.booted() {
         call AMControl.start();
 	call Leds.led0On();
-	call GreenLightTimer.startOneShot(GREEN_LIGHT_DEBUG);
 
 	//Thanks to Alan for help with GeneralIO code.
 	call Red.makeOutput();
@@ -72,7 +70,9 @@ implementation
     }
 
     event void GreenLightTimer.fired(){
+	//Turn on green LED
 	call Leds.led1On();
+	//Turn off red LED
 	call Leds.led0Off();
 	
 	call Red.set();//Turn off red.
@@ -80,8 +80,8 @@ implementation
 	call Yellow.set();//Turn off Yellow
     }	
     event void RedLightTimer.fired(){
-	call Leds.led0On();
-	call Leds.led1Off();
+	call Leds.led0On();//Turn on Red
+	call Leds.led1Off();//Turn off Green
 	
 	call Red.clr();//Turn on Red
 	call Green.set();//Turn off green.
@@ -114,14 +114,14 @@ implementation
 	/* END DEBUG only */
         if (ptrpkt->data[ChannelNo]==RED_PACKET_FLAG){
 		call GreenLightTimer.stop();//Stop the green light timer if it is running.
-		if (!RedLightTimer.isRunning())
+		if (!call RedLightTimer.isRunning())
 		{
-        		call Leds.led0On();//Turn on the red light
-	       		call Leds.led1Off();//Turn off the green light
-			call Yellow.clr();
-			call Green.set();
+        		call Leds.led0On();//Turn on the red led
+	       		call Leds.led1Off();//Turn off the green led
+			call Yellow.clr();//If the red light timer is not running, put yellow on.
+			call Green.set();//Turn green off
 				
-			call RedLightTimer.startOneShot(YELLOW_LENGTH);
+			call RedLightTimer.startOneShot(YELLOW_LENGTH);//Start a timer to turn off the yellow and turn on the red.
 		}
 
 
