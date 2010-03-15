@@ -114,12 +114,15 @@ implementation
 	/* END DEBUG only */
         if (ptrpkt->data[ChannelNo]==RED_PACKET_FLAG){
 		call GreenLightTimer.stop();//Stop the green light timer if it is running.
-        	call Leds.led0On();//Turn on the red light
-       		call Leds.led1Off();//Turn off the green light
-		call Yellow.clr();
-		call Green.set();
-		
-		call RedLightTimer.startOneShot(YELLOW_LENGTH);
+		if (!RedLightTimer.isRunning())
+		{
+        		call Leds.led0On();//Turn on the red light
+	       		call Leds.led1Off();//Turn off the green light
+			call Yellow.clr();
+			call Green.set();
+				
+			call RedLightTimer.startOneShot(YELLOW_LENGTH);
+		}
 
 
         }
