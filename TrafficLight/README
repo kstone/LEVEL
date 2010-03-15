@@ -1,0 +1,30 @@
+This file describes the use and operation of the TrafficLight App.
+
+
+Installation/Equipment:
+
+The TrafficLight App is designed to toggle the lights on a modified Traffic Light from LavaLamp.  Specifically, the following alterations have been performed:
+  Mounting taken apart.
+  Control chip removed from circuit board.
+  Negative wired to TelosB negative port.
+  Positive wired to TelosB positive port.
+  Pins for controlling each of the lights in the traffic light added to three extension slots on the TelosB board. (6.0 for yellow, 6.1 for green, 6.2 for red)
+  3rd Battery shorted using a wire on the Traffic Light.
+
+
+Once equipped, this application can be installed on the TelosB connected to the traffic light using the standard toolset (make telosb install)
+
+Operation:
+
+  Upon startup, the application will set the light to Red.  In general, the LEDs will mirror the light status except in cases where there is a yellow light (green led left on).
+
+  The mote will listen for packets from a TeacherAcoustic application.  Upon hearing a packet, it will act based on the contents of that packet.
+
+  For Red Packets:
+	The mote will check if the light is already red.  If it is, no effect.  If not, it will turn off green, turn on the yellow light, and then set a timer to change the red light to on after 1 second.
+
+  For Green Packets:
+	The mote will set a green timer (if not already running) for a period in the future defined in the packet.  Upon firing that timer, it will turn off all lights and turn on the green light (both LED and light).
+
+  The mote can run off the batteries of the light if needed.  USB will power both mote and light, but only dimly on the light.    
+
