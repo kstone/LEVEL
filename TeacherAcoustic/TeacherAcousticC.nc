@@ -73,6 +73,7 @@ implementation
     #define UNIVERSAL_TIMER 1000000   /* Basically creating a reference frame for events.  Should be large enough that there will be no collisions by wraparound */
     #define HAND_RAISE_DELAY 15000  /* Time (in ms) to delay before giving the kids a green to raise their hands after the teach stops talking. */
 
+    #define TALKING_DEVIATIONS 2 /* Number of standard deviations away from the mean is representative that talking is occuring */
     uint16_t ChannelNo = 0; 
 
     /* global variable to hold sensor readings */ 
@@ -156,8 +157,8 @@ implementation
             stddev = sqrtf(stddev);     /** use sqrtf instead of sqrt b/c telosb microcontroller supports single precision variants of math functions **/
             printf("Calibration stddev: %4u\n", stddev);
 
-            upperBound = calibrationAverage + (2 * stddev);
-            lowerBound = calibrationAverage - (2 * stddev);
+            upperBound = calibrationAverage + (TALKING_DEVIATIONS * stddev);
+            lowerBound = calibrationAverage - (TALKING_DEVIATIONS * stddev);
 
             /* Start sampling the acoustic sensor at sampling rate */
             call WakeupTimer.startPeriodic(SAMPLING_FREQUENCY);
