@@ -66,14 +66,14 @@ implementation
 
     /* Define variables and constants */  
 
-    #define SAMPLING_FREQUENCY 1000  /* should be higher than 100 ms */
-    #define CALIBRATION_TIME 30      /* Times we will sample for calibration period on boot */
+    #define SAMPLING_FREQUENCY 100  /* should be higher than 100 ms */
+    #define CALIBRATION_TIME 150      /* Times we will sample for calibration period on boot */
     #define SPEECH_TIMER 5000          /* TODO: come up with a better way, or a reason for making this 10 
                                         (this is the delay before assuming teacher is done talking) */
     #define UNIVERSAL_TIMER 1000000   /* Basically creating a reference frame for events.  Should be large enough that there will be no collisions by wraparound */
-    #define HAND_RAISE_DELAY 15000  /* Time (in ms) to delay before giving the kids a green to raise their hands after the teach stops talking. */
+    #define HAND_RAISE_DELAY 8000  /* Time (in ms) to delay before giving the kids a green to raise their hands after the teach stops talking. */
 
-    #define TALKING_DEVIATIONS 2 /* Number of standard deviations away from the mean is representative that talking is occuring */
+    #define TALKING_DEVIATIONS 1.25 /* Number of standard deviations away from the mean is representative that talking is occuring */
     uint16_t ChannelNo = 0; 
 
     /* global variable to hold sensor readings */ 
@@ -97,6 +97,7 @@ implementation
     uint32_t stddev = 0;
     uint32_t upperBound = 0;
     uint32_t lowerBound = 0;
+    uint8_t outlierCount = 0;//Outlier Count will make it so that it has to see two "outside" values in a row to trigger.  This is in conjunction with increqasing the sampling frequency.
 
     /* -------- Initializations at powerup --------------- */  
     event void Boot.booted() {
@@ -248,21 +249,27 @@ implementation
         else{
             //MICdata = data;
             if(data < lowerBound || data > upperBound){
-                /* Students lights should be red, the teacher is talking */
-                post sendRedPacket();  /* we probably don't need to send this packet with every readying...we will for now */
+		if (outlierCount>=1){
+                  /* Students lights should be red, the teacher is talking */
+                  post sendRedPacket();  /* we probably don't need to send this packet with every readying...we will for now */
 
-                /* If the countdown timer to turn students lights green was started, stop it because the teacher is still talking */
+                  /* If the countdown timer to turn students lights green was started, stop it because the teacher is still talking */
 
-		/* For debug, turn on the blue led when "Talking" is detected" */
-		call Leds.led2On();
+		  /* For debug, turn on the blue led when "Talking" is detected" */
+		  call Leds.led2On();
+		  outlierCount=0;
 
-                if(call SpeechTimer.isRunning()){
-                    printf("SpeechTimer was running, but still talking...turning timer off.\n");
-                    call SpeechTimer.stop();
+                  if(call SpeechTimer.isRunning()){
+                      printf("SpeechTimer was running, but still talking...turning timer off.\n");
+                      call SpeechTimer.stop();
+		  }
                 }
-
+		else{
+		  outlierCount+=1;
+		}
             }
             else{
+		outlierCount=0;
                 /* Need to keep track of how many samples come back in this range...and turn students lights green at the appropriate time.  */
                 /* TODO: this is currently dependant on the sampling rate, SAMPLING_FREQUENCY, this is not ideal */
                 if(call SpeechTimer.isRunning()){
