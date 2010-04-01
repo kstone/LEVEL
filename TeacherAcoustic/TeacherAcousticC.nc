@@ -73,7 +73,7 @@ implementation
     #define UNIVERSAL_TIMER 1000000   /* Basically creating a reference frame for events.  Should be large enough that there will be no collisions by wraparound */
     #define HAND_RAISE_DELAY 8000  /* Time (in ms) to delay before giving the kids a green to raise their hands after the teach stops talking. */
 
-    #define TALKING_DEVIATIONS 1.25 /* Number of standard deviations away from the mean is representative that talking is occuring */
+    #define TALKING_DEVIATIONS 1.5 /* Number of standard deviations away from the mean is representative that talking is occuring */
     uint16_t ChannelNo = 0; 
 
     /* global variable to hold sensor readings */ 

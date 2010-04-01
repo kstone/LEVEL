@@ -59,10 +59,19 @@ implementation
 
     /* Define variables and constants */  
 
-    #define SAMPLING_FREQUENCY 1000  /* should be higher than 100 ms */
-    #define CALIBRATION_TIME 30      /* Times we will sample for calibration period on boot */
+    #define SAMPLING_FREQUENCY 100  /* should be higher than 100 ms */
+    #define CALIBRATION_TIME 150      /* Times we will sample for calibration period on boot */
     #define SPEECH_TIMER 10000          /* TODO: come up with a better way, or a reason for making this 10 
                                         (this is the delay before assuming teacher is done talking) */
+
+
+    #define TALKING_DEVIATIONS 1.5 /* Number of standard deviations away from the mean is representative that talking is occuring */
+
+    #define ADDITIVE_DECREASE 5000 /* ms which the student delay should decrease for a round of no talking. */
+    #define MULTIPLICATIVE_INCREASE 1.5 /* Rate at which delay should increase when the student does participate */
+
+    #define RED_STATE 0
+    #define GREEN_STATE 2
 
     uint16_t ChannelNo = 0; 
 
@@ -84,7 +93,11 @@ implementation
     uint32_t stddev = 0;
     uint32_t upperBound = 0;
     uint32_t lowerBound = 0;
-
+    uint32_t studentDelay = 0;
+    uint8_t state = RED_STATE;
+    uint8_t hasParticipatedLastRound = 0;
+    uint32_t baseDelayLength=0;
+    uint8_t outlierCount = 0;//Outlier Count will make it so that it has to see two "outside" values in a row to trigger.  This is in conjunction with increqasing the sampling frequency.
     /* -------- Initializations at powerup --------------- */  
     event void Boot.booted() {
         call AMControl.start();
@@ -133,8 +146,8 @@ implementation
             stddev = sqrtf(stddev);     /** use sqrtf instead of sqrt b/c telosb microcontroller supports single precision variants of math functions **/
             printf("Calibration stddev: %4u\n", stddev);
 
-            upperBound = calibrationAverage + (2 * stddev);
-            lowerBound = calibrationAverage - (2 * stddev);
+            upperBound = calibrationAverage + (TALKING_DEVIATIONS * stddev);
+            lowerBound = calibrationAverage - (TALKING_DEVIATIONS * stddev);
 
             /* Start sampling the acoustic sensor at sampling rate */
             call WakeupTimer.startPeriodic(SAMPLING_FREQUENCY);
@@ -149,6 +162,7 @@ implementation
     event void GreenLightTimer.fired(){
 	call Leds.led1On();//Turn on the green light
 	call Leds.led0Off();//Turn off the red light
+	state = GREEN_STATE;
     }
 
     event void AMControl.startDone(error_t err) {
@@ -170,14 +184,32 @@ implementation
     event  message_t* Receive.receive(message_t* msg, void* payload, uint8_t length){
         SenseToRadioMsg* ptrpkt = (SenseToRadioMsg*)payload;
 
-	/* DEBUG only - flash the blue light to indicate a packet received. */
-        call Leds.led2On();
-        call Leds.led2Off();
-	/* END DEBUG only */
+        if(calibrating){//Ignore packets while calibrating
+	  return msg;
+	}
+    
+
         if (ptrpkt->data[ChannelNo]==RED_PACKET_FLAG){
 		call GreenLightTimer.stop();//Stop the green light timer if it is running.
         	call Leds.led0On();//Turn on the red light
        		call Leds.led1Off();//Turn off the green light
+		if (state == GREEN_STATE){
+			state = RED_STATE;
+			
+			//Now perform actions based upon whether student participated last time.
+			if (hasParticipatedLastRound==0){ // Did not participate
+				if (studentDelay > ADDITIVE_DECREASE)
+					studentDelay-=ADDITIVE_DECREASE;
+				else
+					studentDelay=0;
+			}
+			else{ //Did participate
+				studentDelay=(studentDelay+baseDelayLength)*MULTIPLICATIVE_INCREASE-baseDelayLength;
+			}
+			hasParticipatedLastRound = 0;//Reset participation flag for next round.
+			call Leds.led2Off();//Turn off blue to indicate round has passed.
+
+		}
         }
 	else if (ptrpkt->data[ChannelNo]==GREEN_PACKET_FLAG){
                 if (call GreenLightTimer.isRunning())
@@ -186,7 +218,8 @@ implementation
 		}
 		else
 		{
-			call GreenLightTimer.startOneShot((ptrpkt->data[ChannelNo+3])-(ptrpkt->data[ChannelNo+2]));//Start a timer for when the green light should turn on.	
+			baseDelayLength=(ptrpkt->data[ChannelNo+3])-(ptrpkt->data[ChannelNo+2]);//Set the base delay length.
+			call GreenLightTimer.startOneShot(baseDelayLength+studentDelay);//Start a timer for when the green light should turn on.	
 		}
 	}
 	else
@@ -226,24 +259,17 @@ implementation
         else{
             //MICdata = data;
             if(data < lowerBound || data > upperBound){
-
-                /* If the countdown timer to turn students lights green was started, stop it because the teacher is still talking */
-                if(call SpeechTimer.isRunning()){
-                    printf("SpeechTimer was running, but still talking...turning timer off.\n");
-                    call SpeechTimer.stop();
-                }
+		if (state == GREEN_STATE && outlierCount==1)
+		{
+			hasParticipatedLastRound=1;
+			call Leds.led2On();
+		}
+                outlierCount=1;		
 
             }
-            else{
-                /* Need to keep track of how many samples come back in this range...and turn students lights green at the appropriate time.  */
-                /* TODO: this is currently dependant on the sampling rate, SAMPLING_FREQUENCY, this is not ideal */
-                if(call SpeechTimer.isRunning()){
-                    /* The timer is already running...no need to start it...Do we need this? */
-                }
-                else{
-                    printf("Sarting the SpeechTimer.\n");
-                    call SpeechTimer.startOneShot(SPEECH_TIMER);
-                }
+	    else
+	    {
+		outlierCount=0;
             }
 
         }
