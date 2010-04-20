@@ -19,6 +19,11 @@
  *  2.  Listens for packets from the base station (no relaying)
  *   2a.  If red packet received, turns only red led on.
  *   2b.  If greed packet received, turns only green led on at specified time.
+ *
+ *  Adding protocol changes as follows
+ *    Getting ACKS from BMAC
+ *    
+ *
  */
 /*****************************************************************************************/
 
