@@ -36,6 +36,7 @@
 #include "SBT80ADCmap.h"
 #include "printf.h"
 #include "math.h"
+#include "UserButton.h"
 
 module TeacherAcousticC
 {
@@ -56,6 +57,7 @@ module TeacherAcousticC
         interface AMSend;
         interface SplitControl as AMControl;
 
+	interface Notify<button_state_t>;
     }
 
 }
@@ -72,6 +74,7 @@ implementation
                                         (this is the delay before assuming teacher is done talking) */
     #define UNIVERSAL_TIMER 1000000   /* Basically creating a reference frame for events.  Should be large enough that there will be no collisions by wraparound */
     #define HAND_RAISE_DELAY 8000  /* Time (in ms) to delay before giving the kids a green to raise their hands after the teach stops talking. */
+    #define SHORT_HAND_RAISE_DELAY 500 /* Time (in ms) to delay before giving kids a green.  Used for the userbutton short circuit. */
 
     #define TALKING_DEVIATIONS 1.5 /* Number of standard deviations away from the mean is representative that talking is occuring */
     uint16_t ChannelNo = 0; 
@@ -86,6 +89,8 @@ implementation
     
     void task sendRedPacket();
     void task sendGreenPacket();
+    void task sendDelayGreenPacket();
+    uint32_t greenPacketDelay=0;
 
     void task calibrateAcoustic();
     bool calibrating = FALSE; /* used to keep track of what sensor data should be used for calibration */
@@ -107,6 +112,7 @@ implementation
         call SBcontrol.clr();
         call SBcontrol.makeOutput();
         call SBcontrol.selectIOFunc();
+	call Notify.enable();
  
         /* Send a broadcast red packet out */
         post sendRedPacket(); 
@@ -238,6 +244,24 @@ implementation
             }
         }
     }
+    
+
+   /* -------- TASK: sendDelayGreenPacket - send a broadcast packet out with parameterized delay and instructions to turn on green LED --------------- */
+    void task sendDelayGreenPacket(){
+        /* led1 is green...green packet will have payload of all 1's in ChannelNo 0 */
+        SenseToRadioMsg* ptrpkt = (SenseToRadioMsg*)(call Packet.getPayload(&pkt, len));
+        ptrpkt->data[ChannelNo] = GREEN_PACKET_FLAG;
+        ptrpkt->data[ChannelNo +1] = DEAD;  /* This is for error checking */
+        ptrpkt->data[ChannelNo +2] = call UniversalTimer.getNow();
+        ptrpkt->data[ChannelNo +3] = ptrpkt->data[ChannelNo + 2]+greenPacketDelay;
+        /* TODO: implement message queue when radio is busy */
+        if (!busy) {
+            if (call AMSend.send(AM_BROADCAST_ADDR, &pkt, sizeof(SenseToRadioMsg)) == SUCCESS) {
+                call Leds.led1On();
+                busy = TRUE;
+            }
+        }
+    } 
 
     /* -------- EVENT: MIC channel sampling done - Check against calibrated boundaries  --------------- */
     event void ReadMIC.readDone(error_t result, uint16_t data) {
@@ -284,5 +308,23 @@ implementation
         }
 
     }
+
+
+    /* -------- EVENT: User Button Pressed or released.  --------------- */
+    event void Notify.notify( button_state_t val ) {
+	if (val == BUTTON_PRESSED)
+	{
+        	post sendRedPacket();
+	}
+	if (val == BUTTON_RELEASED)
+	{
+		//Send a Green Packet for sometime soon.	
+		greenPacketDelay=SHORT_HAND_RAISE_DELAY;
+        	post sendDelayGreenPacket();
+
+	}
+    }
+
+
 
 }

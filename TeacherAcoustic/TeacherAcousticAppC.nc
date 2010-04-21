@@ -30,6 +30,7 @@ implementation {
     components new TimerMilliC() as CalibrationTimer;
     components new TimerMilliC() as SpeechTimer;
     components new TimerMilliC() as UniversalTimer;
+   
 
     TeacherAcousticC.Boot -> MainC;
     TeacherAcousticC.Leds -> LedsC;
@@ -56,6 +57,9 @@ implementation {
     TeacherAcousticC.AMPacket -> AMSenderC;
     TeacherAcousticC.AMSend -> AMSenderC;
     TeacherAcousticC.AMControl -> ActiveMessageC;
+
+    components UserButtonC;
+    TeacherAcousticC.Notify -> UserButtonC;
 
 
 }
